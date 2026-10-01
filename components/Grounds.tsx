@@ -1,15 +1,18 @@
 "use client";
 
 // "Walk the grounds." A pinned horizontal walk through the five spaces, in the order the
-// day uses them, while the site plan fills in the route. Ends on "Book a tour".
+// day uses them, while the site plan fills in the route. Ends on "Book a tour". The orchard
+// and the hall lead with their wide views (the close-ups become insets), any photo opens
+// full screen, and the property from the air sits on the site plan.
 
 import { motion, useMotionValueEvent, useScroll, useTransform } from "framer-motion";
 import { useReduce } from "@/lib/useReduce";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SitePlan, STOP_AT } from "@/components/SitePlan";
 import { CrispStrand } from "@/components/Bulbs";
 import { Sample } from "@/components/ui/Sample";
 import { Words } from "@/components/ui/Reveal";
+import { Lightbox, type LightboxPhoto } from "@/components/ui/Lightbox";
 import { scrollToId, useBooking } from "@/components/Booking";
 import { formatDate } from "@/lib/availability";
 import { useAvailability } from "@/lib/useAvailability";
@@ -35,9 +38,34 @@ const TOUR_DAYS_LONG = `${site.tour.nights[0]} to ${site.tour.nights[site.tour.n
 /** A panel's words only show once it is the one in front, so a peeking panel never reads half-cut. */
 const words = (shown: boolean) => `transition-opacity duration-300 ${shown ? "opacity-100" : "opacity-0"}`;
 
-function Panel({ i, width, shown = true }: { i: number; width?: number; shown?: boolean }) {
+type Open = (photo: LightboxPhoto) => void;
+const AERIAL = site.photos.aerial;
+
+/** The property from the air, beside the site plan: tap for the whole picture. Position it with `className`. */
+function AerialTile({ onOpen, className = "" }: { onOpen: Open; className?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen({ ...AERIAL, caption: "From above" })}
+      aria-label="See the property from above"
+      className={`group block aspect-[8/7] overflow-hidden rounded-xl bg-ink/10 shadow-[0_10px_24px_-14px_rgba(0,0,0,0.6)] ring-2 ring-paper ${className}`}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={AERIAL.src} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+      <span className="absolute inset-x-0 bottom-0 bg-[linear-gradient(180deg,rgba(13,29,22,0),rgba(13,29,22,0.7))] px-2 pb-1 pt-3 text-left text-[9.5px] font-bold uppercase tracking-[0.14em] text-linen">
+        From above <span aria-hidden>⤢</span>
+      </span>
+    </button>
+  );
+}
+
+function Panel({ i, width, shown = true, onOpen }: { i: number; width?: number; shown?: boolean; onOpen: Open }) {
   const s = SPACES[i];
-  const photo = site.photos[s.photo];
+  const close = site.photos[s.photo];
+  // the orchard and the hall lead with the wide view; the close-up becomes an inset
+  const wide = "wide" in s ? site.photos[s.wide] : null;
+  const photo = wide ?? close;
+  const tab = shown ? undefined : -1;
   return (
     <article style={{ width }} className={`flex h-full shrink-0 flex-col overflow-hidden rounded-[24px] bg-paper ring-1 ring-ink/10 ${width ? "" : "w-full"}`}>
       <div className="relative min-h-0 flex-1 overflow-hidden">
@@ -46,6 +74,29 @@ function Panel({ i, width, shown = true }: { i: number; width?: number; shown?: 
         <div className={`absolute left-4 top-4 flex items-center gap-2 rounded-full bg-linen/90 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-ink backdrop-blur ${words(shown)}`}>
           <span className="tabular-nums">0{i + 1}</span> {s.when}
         </div>
+        <button
+          type="button"
+          tabIndex={tab}
+          onClick={() => onOpen({ ...photo, caption: wide ? `${s.name}, wide` : s.name })}
+          className={`absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-[#11261d]/70 px-3 py-1.5 text-[12px] font-bold text-linen backdrop-blur-md transition hover:bg-[#11261d]/85 sm:right-4 sm:top-4 ${words(shown)}`}
+        >
+          <span aria-hidden>⤢</span> {wide ? "See it wide" : "Full screen"}
+        </button>
+        {wide ? (
+          <button
+            type="button"
+            tabIndex={tab}
+            onClick={() => onOpen({ ...close, caption: `${s.name}, close up` })}
+            aria-label={`${s.name}, close up: ${close.alt}`}
+            className={`absolute bottom-3 right-3 aspect-[4/3] w-[30%] max-w-[230px] overflow-hidden rounded-xl shadow-[0_14px_30px_-12px_rgba(0,0,0,0.7)] ring-2 ring-paper sm:bottom-4 sm:right-4 ${words(shown)}`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={close.src} alt="" loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+            <span className="absolute inset-x-0 bottom-0 bg-[linear-gradient(180deg,rgba(13,29,22,0),rgba(13,29,22,0.7))] px-2 pb-1 pt-3 text-left text-[9.5px] font-bold uppercase tracking-[0.14em] text-linen">
+              Close up
+            </span>
+          </button>
+        ) : null}
       </div>
       <div aria-hidden={!shown || undefined} className={`grid gap-x-8 gap-y-3 p-4 sm:p-6 lg:grid-cols-[1.1fr_1fr] ${words(shown)}`}>
         <div>
@@ -145,6 +196,8 @@ function TourCard({ width, shown = true }: { width?: number; shown?: boolean }) 
 
 export function Grounds() {
   const reduce = useReduce();
+  const [big, setBig] = useState<LightboxPhoto | null>(null);
+  const shut = useCallback(() => setBig(null), []);
   const ref = useRef<HTMLElement>(null);
   const port = useRef<HTMLDivElement>(null);
   const [pw, setPw] = useState(900);
@@ -198,11 +251,14 @@ export function Grounds() {
         <div className="mx-auto max-w-[1320px] px-5 sm:px-10">
           {header}
           <div className="mt-8 grid gap-6 lg:grid-cols-[420px_1fr]">
-            <SitePlan route={route} active={0} className="aspect-[4/3] w-full rounded-2xl bg-paper ring-1 ring-ink/10" />
+            <div className="relative self-start">
+              <SitePlan route={route} active={0} className="aspect-[4/3] w-full rounded-2xl bg-paper ring-1 ring-ink/10" />
+              <AerialTile onOpen={setBig} className="absolute left-2.5 top-2.5 w-[26%]" />
+            </div>
             <div className="grid gap-5">
               {SPACES.map((s, i) => (
                 <div key={s.id} className="h-[520px]">
-                  <Panel i={i} />
+                  <Panel i={i} onOpen={setBig} />
                 </div>
               ))}
               <div className="h-[420px]">
@@ -211,6 +267,7 @@ export function Grounds() {
             </div>
           </div>
         </div>
+        <Lightbox photo={big} onClose={shut} />
       </section>
     );
   }
@@ -222,13 +279,20 @@ export function Grounds() {
           <div className="flex min-h-0 flex-col">
             {header}
             <div className="mt-3 flex min-h-0 items-start gap-4 lg:mt-6 lg:block">
-              <SitePlan route={route} active={active} compact={narrow} className="aspect-[4/3] h-[150px] shrink-0 rounded-2xl bg-paper ring-1 ring-ink/10 sm:h-[200px] lg:h-auto lg:w-full" />
-              <div className="min-w-0 lg:mt-5">
-                <p className="eyebrow text-[0.6rem] text-ink/45 tabular-nums">
-                  Stop {active + 1} of {SPACES.length}
-                </p>
-                <p className="display mt-1 text-[1.4rem] leading-tight lg:text-[1.8rem]">{SPACES[active].name}</p>
-                <p className="mt-1 text-[12.5px] font-semibold text-ink/55">{SPACES[active].when}</p>
+              <div className="relative shrink-0">
+                <SitePlan route={route} active={active} compact={narrow} className="aspect-[4/3] h-[150px] shrink-0 rounded-2xl bg-paper ring-1 ring-ink/10 sm:h-[200px] lg:h-auto lg:w-full" />
+                {/* the property from the air, on the plan's quiet corner (phones: beside it) */}
+                <AerialTile onOpen={setBig} className="absolute left-2 top-2 hidden w-[26%] sm:block lg:left-2.5 lg:top-2.5" />
+              </div>
+              <div className="flex min-w-0 items-start gap-3 lg:mt-5">
+                <div className="min-w-0">
+                  <p className="eyebrow text-[0.6rem] text-ink/45 tabular-nums">
+                    Stop {active + 1} of {SPACES.length}
+                  </p>
+                  <p className="display mt-1 text-[1.4rem] leading-tight lg:text-[1.8rem]">{SPACES[active].name}</p>
+                  <p className="mt-1 text-[12.5px] font-semibold text-ink/55">{SPACES[active].when}</p>
+                  <AerialTile onOpen={setBig} className="relative mt-2 w-[84px] sm:hidden" />
+                </div>
               </div>
             </div>
           </div>
@@ -236,7 +300,7 @@ export function Grounds() {
             <motion.div style={{ x }} className="flex h-full" role="list">
               {SPACES.map((s, i) => (
                 <div key={s.id} role="listitem" className="h-full shrink-0" style={{ marginRight: gap }}>
-                  <Panel i={i} width={panelW} shown={front === i} />
+                  <Panel i={i} width={panelW} shown={front === i} onOpen={setBig} />
                 </div>
               ))}
               <div role="listitem" className="h-full shrink-0">
@@ -246,6 +310,7 @@ export function Grounds() {
           </div>
         </div>
       </div>
+      <Lightbox photo={big} onClose={shut} />
     </section>
   );
 }

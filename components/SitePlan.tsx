@@ -74,7 +74,8 @@ export function SitePlan({ route, active, compact = false, className = "" }: { r
     [320, 346, "lawn", "middle"],
     [530, 290, "orchard", "middle"],
     [320, 215, "hall", "middle"],
-    [146, 146, "terrace", "middle"],
+    // (below the terrace: its top-left corner holds the aerial photo)
+    [148, 254, "terrace", "middle"],
   ];
   const ink = "#1f3a2e";
   return (
@@ -125,11 +126,20 @@ export function SitePlan({ route, active, compact = false, className = "" }: { r
           </g>
         ))}
 
-        {/* the barn: gambrel centre, two wings, porch on the east */}
+        {/* the barn: a steep gable centre (its ridge runs to the glass gable end on the lawn),
+            two wings, porch on the east */}
         <rect x="228" y="142" width="184" height="88" fill="#f8f3ea" stroke={ink} strokeWidth="1.6" />
         <rect x="276" y="142" width="88" height="88" fill="none" stroke={ink} strokeWidth="1.1" />
-        <line x1="320" y1="142" x2="320" y2="230" stroke={ink} strokeWidth="0.6" strokeDasharray="2 3" opacity="0.6" />
-        <rect x="309" y="175" width="22" height="22" fill="none" stroke={ink} strokeWidth="0.9" />
+        {/* the two roof slopes, ruled toward the eaves, and the ridge between them */}
+        {Array.from({ length: 7 }, (_, i) => (
+          <g key={i} opacity="0.32">
+            <line x1="281" y1={150 + i * 12} x2="314" y2={150 + i * 12} stroke={ink} strokeWidth="0.6" />
+            <line x1="326" y1={150 + i * 12} x2="359" y2={150 + i * 12} stroke={ink} strokeWidth="0.6" />
+          </g>
+        ))}
+        <line x1="320" y1="142" x2="320" y2="230" stroke={ink} strokeWidth="1.3" />
+        {/* the glass gable end */}
+        <line x1="282" y1="229" x2="358" y2="229" stroke="#e0953f" strokeWidth="2.2" opacity="0.85" />
         <rect x="412" y="150" width="26" height="72" fill="url(#gravel)" stroke={ink} strokeWidth="0.9" />
         {/* doors */}
         <rect x="286" y="226" width="16" height="6" fill={ink} />
