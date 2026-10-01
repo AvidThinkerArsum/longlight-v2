@@ -1,15 +1,21 @@
 import { site } from "@/lib/site";
 import { CrispStrand } from "@/components/Bulbs";
+import { SCENE_CREDITS } from "@/lib/scenes";
 
 const CREDITS: { key: keyof typeof site.photos; what: string }[] = [
   { key: "hero", what: "The barn" },
+  { key: "aerial", what: "From above" },
   { key: "lawn", what: "The lawn" },
   { key: "hall", what: "The hall" },
+  { key: "hallWide", what: "The hall, wide" },
   { key: "orchard", what: "The orchard" },
+  { key: "orchardWide", what: "The orchard, from the air" },
   { key: "terrace", what: "The terrace" },
   { key: "loft", what: "The loft" },
   { key: "owners", what: "The portrait" },
 ];
+
+const link = "underline decoration-linen/25 underline-offset-2 hover:text-linen";
 
 // What the page says about itself depends on who it's for: the Longlight demo is an
 // invented venue; a concept for a real venue must not call that venue fictional; a live
@@ -48,20 +54,33 @@ export function Footer() {
             <p className={ABOUT ? "mt-3" : ""}>Sunset times are computed with NOAA&apos;s solar equations for {site.town}, {site.state}.</p>
           </div>
           <div className="text-[13px] leading-relaxed text-linen/60">
-            <p className="eyebrow mb-3 text-[0.6rem] text-linen/45">Photographs, via Pexels</p>
+            <p className="eyebrow mb-3 text-[0.6rem] text-linen/45">Photographs and clips, via Pexels</p>
             <ul className="space-y-1">
               {CREDITS.filter((c) => c.key !== "owners" || site.fictional || !site.showConceptBanner).map((c) => {
                 const p = site.photos[c.key];
                 return (
                   <li key={c.key}>
                     {c.what}:{" "}
-                    <a href={`https://www.pexels.com/photo/${p.id}/`} target="_blank" rel="noreferrer" className="underline decoration-linen/25 underline-offset-2 hover:text-linen">
+                    <a href={`https://www.pexels.com/photo/${p.id}/`} target="_blank" rel="noreferrer" className={link}>
                       {p.by}
                     </a>
                   </li>
                 );
               })}
             </ul>
+            {/* the hero's scenes: every photographer and filmmaker, once each per frame */}
+            <p className="mt-3">
+              The day, in scenes:{" "}
+              {SCENE_CREDITS.map((c, i) => (
+                <span key={c.page}>
+                  {i ? ", " : null}
+                  <a href={c.page} target="_blank" rel="noreferrer" className={link}>
+                    {c.by}
+                  </a>
+                  {c.video ? " (video)" : null}
+                </span>
+              ))}
+            </p>
           </div>
         </div>
         {site.showConceptBanner ? (
