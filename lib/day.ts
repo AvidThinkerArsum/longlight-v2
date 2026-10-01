@@ -1,7 +1,7 @@
 // Resolves the configured run of show against the real sunset for the featured date,
 // and lays the stops out along the hero's scroll.
 
-import { site, type ClockTime, type Focus } from "./site";
+import { site, type Back, type ClockTime, type Focus, type Scene } from "./site";
 import { clockLabel, sunset } from "./sun";
 
 export const SUNSET = sunset(site.featuredDate, site.lat, site.lon, site.timeZone);
@@ -53,6 +53,10 @@ export type Stop = {
   place: string;
   line: string;
   focus: { d: Focus; m: Focus };
+  /** What the hero shows at this stop; without one, the stop plays on the barn photo. */
+  scene?: Scene;
+  /** For a barn stop after a scene: how the camera comes back to the barn. */
+  back?: Back;
 };
 
 export const STOPS: Stop[] = site.runOfShow.map((s, i) => {
@@ -67,6 +71,8 @@ export const STOPS: Stop[] = site.runOfShow.map((s, i) => {
     place: s.place,
     line: s.line,
     focus: s.focus,
+    scene: "scene" in s ? s.scene : undefined,
+    back: "back" in s ? s.back : undefined,
   };
 });
 

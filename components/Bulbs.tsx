@@ -26,7 +26,7 @@ export type Run = { x0: number; y0: number; x1: number; y1: number; sag: number;
 export const RUNS: Record<"desktop" | "mobile" | "still" | "stillMobile", Run> = {
   // in from the top-left, down across the sky: below the nav, clear of the gable windows
   desktop: { x0: -6, y0: 9, x1: 106, y1: 21, sag: 5, count: 10, sizes: [54, 100] },
-  // on phones the strand crosses the sky between the clock and the cupola, never the gable
+  // on phones the strand crosses the sky between the clock and the peak, never the gable
   mobile: { x0: -10, y0: 24, x1: 110, y1: 31, sag: 2, count: 4, sizes: [40, 62] },
   // the still frame keeps the left for the headline
   still: { x0: 108, y0: 5, x1: 52, y1: 21, sag: 5, count: 6, sizes: [52, 96] },

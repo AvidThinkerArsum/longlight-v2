@@ -1,9 +1,10 @@
 "use client";
 
-// The hero: one daytime photograph plays a whole wedding day as you scroll. The camera
-// tours between focal points, the clock rolls, the light goes gold, rose, then blue, and
-// the barn lights itself up. It opens on the featured couple, then follows their day stop by
-// stop; the pin grows with the run of show (.hero-pin in globals.css).
+// The hero: a wedding day, played as you scroll. It opens on the barn and the featured
+// couple, then the camera moves through their day in scenes (stock stills and clips, see
+// components/stage/Scenes.tsx) while the clock rolls; for sunset and the send-off it comes
+// back to the barn, which has gone gold, rose, then blue, and lit itself up. The pin grows
+// with the run of show (.hero-pin in globals.css).
 
 import {
   motion,
@@ -16,6 +17,7 @@ import {
 } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { Stage } from "@/components/stage/Stage";
+import { Scenes, useRich } from "@/components/stage/Scenes";
 import { BokehStrand, RUNS } from "@/components/Bulbs";
 import { Odometer } from "@/components/Odometer";
 import { Sample } from "@/components/ui/Sample";
@@ -288,6 +290,10 @@ function ScrollHero() {
   const frame = useRef<HTMLDivElement>(null);
   const { w, h, mobile } = useFrameSize(frame);
   const masks = useMasks();
+  const rich = useRich(mobile);
+  // How much of the frame the scenes cover: at 1 the barn underneath isn't drawn at all.
+  const cover = useMotionValue(0);
+  const barnShown = useTransform(cover, (c) => (c >= 0.999 ? "hidden" : "visible"));
 
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
   // Near-critical damping: glides, but comes to rest quickly (the clock settles on a minute).
@@ -333,8 +339,11 @@ function ScrollHero() {
   // On phones the clock takes the headline's place, so it waits for the headline to go.
   const topUi = useTransform([p, ui], ([v, u]: number[]) => Math.min(smooth(TOP_UI_IN[0], TOP_UI_IN[1], v), u));
   // The scrim under the clock and rail: light by day (a sunny barn shouldn't look like
-  // dusk), full after sunset.
-  const scrim = useTransform(clock, (m) => 0.46 + 0.54 * smooth(-70, -5, m - SUNSET.minutes));
+  // dusk), full after sunset, and full over a scene (a white dress or a bright sky can sit
+  // right behind the captions).
+  const scrim = useTransform([clock, cover], ([m, c]: number[]) => Math.max(0.46 + 0.54 * smooth(-70, -5, m - SUNSET.minutes), 0.92 * c));
+  // ...and a shade at the top over a scene, for the nav (and on phones, the clock).
+  const topShade = useTransform([cover, ui], ([c, u]: number[]) => c * u);
 
   const rail = (
     <div className="relative">
@@ -361,10 +370,12 @@ function ScrollHero() {
       window.dispatchEvent(new Event(TONE_EVENT));
     }
   });
-  useMotionValueEvent(clock, "change", (m) => {
+  // Over a scene it's dark too: the scenes carry their own shade at the top.
+  const dark = useTransform([clock, cover], ([m, c]: number[]) => (c > 0.5 || m - SUNSET.minutes > (mobile ? -35 : -18) ? 1 : 0));
+  useMotionValueEvent(dark, "change", (d) => {
     const el = frame.current;
     if (!el) return;
-    const tone = m - SUNSET.minutes > (mobile ? -35 : -18) ? "dark" : "light";
+    const tone = d ? "dark" : "light";
     if (el.dataset.tone !== tone) {
       el.dataset.tone = tone;
       window.dispatchEvent(new Event(TONE_EVENT));
@@ -385,9 +396,17 @@ function ScrollHero() {
       }}
     >
       <div ref={frame} data-tone="light" className="group sticky top-0 h-svh w-full overflow-hidden bg-ink">
-        <motion.div style={{ x, y, scale, originX: 0, originY: 0 }} className="absolute left-0 top-0">
+        <motion.div style={{ x, y, scale, originX: 0, originY: 0, visibility: barnShown }} className="absolute left-0 top-0">
           <Stage light={light} masks={masks} eager />
         </motion.div>
+
+        {/* the day, in scenes, over the barn */}
+        <Scenes p={p} w={w} h={h} mobile={mobile} rich={rich} target={mobile ? CAMERA_TARGET.m : CAMERA_TARGET.d} cover={cover} />
+        <motion.div
+          aria-hidden
+          style={{ opacity: topShade }}
+          className="pointer-events-none absolute inset-x-0 top-0 h-[270px] bg-[linear-gradient(180deg,rgba(13,29,22,0.72)_0%,rgba(13,29,22,0.5)_42%,rgba(13,29,22,0.2)_72%,rgba(13,29,22,0)_100%)] md:h-[170px] md:bg-[linear-gradient(180deg,rgba(13,29,22,0.5)_0%,rgba(13,29,22,0)_100%)]"
+        />
 
         <BokehStrand level={light.bulbs} sway={{ x: sx, y: sy }} run={mobile ? RUNS.mobile : RUNS.desktop} fade={out} drop={mobile ? strandDrop : undefined} />
 
