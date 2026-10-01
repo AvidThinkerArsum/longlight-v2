@@ -12,7 +12,8 @@ import { Words } from "@/components/ui/Reveal";
 import { useBooking } from "@/components/Booking";
 import { useReferrer } from "@/components/People";
 import { useLightPreset } from "@/lib/useLight";
-import { DAY_NAMES, estimate, formatDate, lookup, money } from "@/lib/availability";
+import { DAY_NAMES, estimate, formatDate, money } from "@/lib/availability";
+import { useAvailability } from "@/lib/useAvailability";
 import { FEATURED } from "@/lib/day";
 import { site, type Focus } from "@/lib/site";
 import { clockLabel } from "@/lib/sun";
@@ -40,7 +41,8 @@ export function Hold() {
   const referrer = useReferrer();
   const [sent, setSent] = useState<Sent | null>(null);
   const [tourDay, setTourDay] = useState<string>(site.tour.nights[Math.floor(site.tour.nights.length / 2)]);
-  const entry = lookup(date);
+  const avail = useAvailability();
+  const entry = avail?.lookup(date);
   const est = entry ? estimate(entry, guests) : null;
   const vagueDate = `${FEATURED.month.toLowerCase()} ${FEATURED.day}`;
 
@@ -126,7 +128,7 @@ export function Hold() {
       {/* the barn, lit, at the hour you'd come and see it; the form sits over its lawn */}
       <div aria-hidden className="relative h-[52vh] min-h-[340px] sm:h-[58vh] sm:min-h-[420px]">
         <CoverStage light={light} focus={HOLD_FOCUS} />
-        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(30,35,64,0.6)_0%,rgba(30,35,64,0)_20%,rgba(30,35,64,0)_52%,rgba(30,35,64,0.85)_82%,#1e2340_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(31,58,46,0.6)_0%,rgba(31,58,46,0)_20%,rgba(31,58,46,0)_52%,rgba(31,58,46,0.85)_82%,#1f3a2e_100%)]" />
       </div>
       <div className="relative mx-auto -mt-[14vh] grid max-w-[1320px] gap-10 px-5 pb-20 sm:-mt-[18vh] sm:px-10 sm:pb-28 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14">
         <div>
@@ -142,7 +144,7 @@ export function Hold() {
           {site.showConceptBanner ? (
             <div className="mt-10 max-w-[460px]">
               <p className="eyebrow text-[0.6rem] text-linen/50">What it replaces</p>
-              <div className="mt-3 rounded-[18px] border border-linen/15 bg-[#171b36]/90 p-5 font-mono text-[13px] leading-relaxed text-linen/70 backdrop-blur-sm">
+              <div className="mt-3 rounded-[18px] border border-linen/15 bg-[#183126]/90 p-5 font-mono text-[13px] leading-relaxed text-linen/70 backdrop-blur-sm">
                 <p className="text-linen/45">Subject:</p>
                 <p className="text-linen/90">is {vagueDate} free? how much?</p>
                 <p className="mt-3">hi!! is {vagueDate} free for a wedding? how much is it? thanks</p>
@@ -190,7 +192,9 @@ export function Hold() {
                     </label>
                     <input id="hold-date" type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} className={`${field} tabular-nums`} />
                     <p className="mt-1.5 text-[12px] font-semibold text-ink/55">
-                      {entry ? (
+                      {!avail ? (
+                        "\u00a0"
+                      ) : entry ? (
                         <>
                           {DAY_NAMES[entry.day]}: {entry.state === "open" ? <span className="text-sage">open</span> : entry.state === "held" ? "held (join the list)" : <span className="text-rose">booked</span>}
                         </>
@@ -219,7 +223,7 @@ export function Hold() {
                   </div>
                   <div className="sm:col-span-2">
                     <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-ink/12 p-3.5">
-                      <input type="checkbox" checked={tour} onChange={(e) => setTour(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[#1e2340]" />
+                      <input type="checkbox" checked={tour} onChange={(e) => setTour(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[#1f3a2e]" />
                       <span className="text-[14px] leading-snug">
                         <strong className="font-bold">Book a tour, too.</strong> <span className="text-ink/65">Weeknights at {TOUR_AT}, when the bulbs come on.</span>
                       </span>

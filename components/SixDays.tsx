@@ -12,7 +12,8 @@ import { scrollToId, useBooking } from "@/components/Booking";
 import { useLightPreset } from "@/lib/useLight";
 import { FEATURED, SUNSET, WINTER, WINTER_SUNSET, resolveTime } from "@/lib/day";
 import { clockLabel } from "@/lib/sun";
-import { addDays, firstOpen, money } from "@/lib/availability";
+import { addDays, money } from "@/lib/availability";
+import { useAvailability } from "@/lib/useAvailability";
 import { site } from "@/lib/site";
 
 const P = site.pricing;
@@ -42,6 +43,7 @@ export function SixDays() {
   const pkg = site.packages[k];
   const light = useLightPreset(pkg.light, !!reduce);
   const { setFilter, setDate } = useBooking();
+  const avail = useAvailability();
   const w = when(pkg);
 
   return (
@@ -65,7 +67,7 @@ export function SixDays() {
           <div className="relative aspect-[4/5] overflow-hidden rounded-[26px] ring-1 ring-linen/10 sm:aspect-[16/11] lg:aspect-auto lg:min-h-[560px]">
             <CoverStage light={light} focus={site.hero.focus.relit} />
             {/* under lg the tabs sit below the photo: switch the light right on it, too */}
-            <div role="group" aria-label="Relight the barn" className="absolute inset-x-3 top-3 z-10 flex gap-1 rounded-full bg-[#10132a]/55 p-1 backdrop-blur-md sm:inset-x-auto sm:left-4 sm:top-4 lg:hidden">
+            <div role="group" aria-label="Relight the barn" className="absolute inset-x-3 top-3 z-10 flex gap-1 rounded-full bg-[#11261d]/55 p-1 backdrop-blur-md sm:inset-x-auto sm:left-4 sm:top-4 lg:hidden">
               {site.packages.map((p, i) => (
                 <button
                   key={p.id}
@@ -78,7 +80,7 @@ export function SixDays() {
                 </button>
               ))}
             </div>
-            <div aria-hidden className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(180deg,rgba(16,19,40,0),rgba(16,19,40,0.78))]" />
+            <div aria-hidden className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(180deg,rgba(17,36,28,0),rgba(17,36,28,0.78))]" />
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={pkg.id}
@@ -133,7 +135,7 @@ export function SixDays() {
                             const prefer =
                               p.filter.season === "winter" ? site.winterDate : p.filter.day === "fri" ? addDays(site.featuredDate, -1) : p.filter.day === "sun" ? addDays(site.featuredDate, 1) : site.featuredDate;
                             // A winter weekend reads best as a Saturday, if one is open.
-                            const hit = (p.filter.season === "winter" ? firstOpen({ day: "sat", season: "winter" }, prefer) : undefined) ?? firstOpen(p.filter, prefer);
+                            const hit = (p.filter.season === "winter" ? avail?.firstOpen({ day: "sat", season: "winter" }, prefer) : undefined) ?? avail?.firstOpen(p.filter, prefer);
                             if (hit) setDate(hit.date);
                             scrollToId("dates");
                           }}

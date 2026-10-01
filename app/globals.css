@@ -4,9 +4,9 @@
   --color-linen: #f3ece1;
   --color-linen-2: #ebe2d3;
   --color-paper: #fbf7f0;
-  --color-ink: #1e2340;
-  --color-ink-2: #2a3057;
-  --color-night: #141830;
+  --color-ink: #1f3a2e;
+  --color-ink-2: #2b4f3f;
+  --color-night: #152b21;
   --color-amber: #f2b562;
   --color-amber-2: #e0953f;
   --color-rose: #c9786e;
@@ -53,6 +53,13 @@ body {
 
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+/* The hero's pinned scroll: a lead-in and a close, plus about 61vh (69vh on wider screens) per
+   stop of the run of show (--hero-stops is set on the section), so a longer day still reads. */
+.hero-pin { height: calc(110vh + var(--hero-stops, 10) * 61vh); }
+@media (min-width: 768px) {
+  .hero-pin { height: calc(130vh + var(--hero-stops, 10) * 69vh); }
 }
 
 /* The hero's type and spacing, with a variant for short laptop screens (1280x720 and the like). */
@@ -157,12 +164,12 @@ input[type="range"].slider {
 }
 input[type="range"].slider::-webkit-slider-runnable-track {
   height: 2px;
-  background: linear-gradient(90deg, var(--color-ink) var(--fill, 50%), rgba(30, 35, 64, 0.2) var(--fill, 50%));
+  background: linear-gradient(90deg, var(--color-ink) var(--fill, 50%), rgba(31, 58, 46, 0.2) var(--fill, 50%));
   border-radius: 2px;
 }
 input[type="range"].slider::-moz-range-track {
   height: 2px;
-  background: rgba(30, 35, 64, 0.2);
+  background: rgba(31, 58, 46, 0.2);
 }
 input[type="range"].slider::-moz-range-progress {
   height: 2px;
@@ -176,7 +183,7 @@ input[type="range"].slider::-webkit-slider-thumb {
   border-radius: 999px;
   background: var(--color-linen);
   border: 2px solid var(--color-ink);
-  box-shadow: 0 2px 8px rgba(30, 35, 64, 0.25);
+  box-shadow: 0 2px 8px rgba(31, 58, 46, 0.25);
 }
 input[type="range"].slider::-moz-range-thumb {
   width: 18px;

@@ -23,7 +23,7 @@ export function CoverStage({ light, focus, target, className = "" }: { light: Li
   }, []);
   const t = cameraTransform(size.w, size.h, size.w < size.h ? focus.m : focus.d, target);
   return (
-    <div ref={ref} className={`absolute inset-0 overflow-hidden bg-[#1e2340] ${className}`}>
+    <div ref={ref} className={`absolute inset-0 overflow-hidden bg-[#1f3a2e] ${className}`}>
       <div className="absolute left-0 top-0 origin-top-left" style={{ transform: `translate(${t.x}px, ${t.y}px) scale(${t.scale})` }}>
         <Stage light={light} masks={masks} />
       </div>

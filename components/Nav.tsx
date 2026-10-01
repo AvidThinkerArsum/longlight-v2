@@ -1,7 +1,7 @@
 "use client";
 
 // A thin header that reads whatever is behind it: ink over sky and linen, linen over dusk
-// and indigo. Sections say what they are with data-tone.
+// and evergreen. Sections say what they are with data-tone.
 
 import { useEffect, useRef, useState } from "react";
 import { site } from "@/lib/site";
@@ -67,7 +67,7 @@ export function Nav() {
   return (
     <header
       ref={ref}
-      className={`fixed inset-x-0 z-50 transition-colors duration-200 ${site.showConceptBanner ? "top-[26px]" : "top-0"} ${dark ? "text-linen [text-shadow:0_1px_14px_rgba(10,12,30,0.75)]" : "text-ink"} ${
+      className={`fixed inset-x-0 z-50 transition-colors duration-200 ${site.showConceptBanner ? "top-[26px]" : "top-0"} ${dark ? "text-linen [text-shadow:0_1px_14px_rgba(11,27,20,0.75)]" : "text-ink"} ${
         solid ? (dark ? "bg-ink/95 backdrop-blur-md" : "bg-linen/90 backdrop-blur-md") : "bg-transparent"
       }`}
     >
@@ -79,7 +79,7 @@ export function Nav() {
           </span>
         </a>
         <div className="flex items-center gap-6">
-          <ul className={`hidden items-center gap-6 whitespace-nowrap rounded-full px-4 py-2 text-[13px] font-semibold transition-colors duration-200 lg:flex ${solid ? "" : dark ? "bg-[#10132a]/45 backdrop-blur-md" : "bg-linen/55 backdrop-blur-md"}`}>
+          <ul className={`hidden items-center gap-6 whitespace-nowrap rounded-full px-4 py-2 text-[13px] font-semibold transition-colors duration-200 lg:flex ${solid ? "" : dark ? "bg-[#11261d]/45 backdrop-blur-md" : "bg-linen/55 backdrop-blur-md"}`}>
             {LINKS.map(([id, label]) => (
               <li key={id}>
                 <a href={`#${id}`} onClick={go(id)} className="opacity-80 transition-opacity hover:opacity-100">
@@ -116,7 +116,7 @@ export function Nav() {
 export function ConceptBanner() {
   if (!site.showConceptBanner) return null;
   return (
-    <div role="note" className="fixed inset-x-0 top-0 z-[60] flex h-[26px] items-center justify-center bg-[#12152b] px-4 text-center text-[11px] font-semibold tracking-wide text-linen/85">
+    <div role="note" className="fixed inset-x-0 top-0 z-[60] flex h-[26px] items-center justify-center bg-[#13271e] px-4 text-center text-[11px] font-semibold tracking-wide text-linen/85">
       <span className="truncate">
         Unofficial concept for {site.name}, not affiliated.
         <span className="hidden sm:inline">

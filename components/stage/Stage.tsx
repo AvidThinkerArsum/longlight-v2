@@ -80,7 +80,7 @@ export const Stage = memo(function Stage({ light, masks, eager = false }: { ligh
     <div className="relative overflow-hidden" style={{ width: W0, height: H0 }}>
     {/* Everything that blends lives in one isolated group that never animates inside, so the
         browser can keep it as a finished picture; the sparklers fizz on top, outside it. */}
-    <div className="absolute inset-0 isolate overflow-hidden bg-[#1e2340]">
+    <div className="absolute inset-0 isolate overflow-hidden bg-[#1f3a2e]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}

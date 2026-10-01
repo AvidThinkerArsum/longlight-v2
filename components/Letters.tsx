@@ -8,7 +8,8 @@ import { useState } from "react";
 import { Sample } from "@/components/ui/Sample";
 import { Rise, Words } from "@/components/ui/Reveal";
 import { scrollToId, useBooking } from "@/components/Booking";
-import { DAY_NAMES, addDays, alternative, formatDate, lookup, money, ordinal } from "@/lib/availability";
+import { DAY_NAMES, addDays, formatDate, money, ordinal, type Availability } from "@/lib/availability";
+import { useAvailability } from "@/lib/useAvailability";
 import { site } from "@/lib/site";
 import { sunset } from "@/lib/sun";
 import { FEATURED } from "@/lib/day";
@@ -20,15 +21,18 @@ const ASKED = addDays(site.featuredDate, -7);
 const ASKED_LABEL = `${formatDate(ASKED, { month: "long" })} ${ordinal(Number(ASKED.slice(8)))}`;
 const ASKED_SHORT = formatDate(ASKED, { month: "long", day: "numeric" });
 
-function letters(): Letter[] {
-  // "Is June 12th available??" answered from the same data as the checker.
-  const asked = lookup(ASKED);
-  const alt = asked && asked.state !== "open" ? alternative(asked) : null;
+function letters(avail: Availability | null): Letter[] {
+  // "Is June 12th available??" answered from the same data as the checker (which is only
+  // known once the page has hydrated: it's rolled from today).
+  const asked = avail?.lookup(ASKED);
+  const alt = avail && asked && asked.state !== "open" ? avail.alternative(asked) : null;
   const altSunset = alt ? sunset(alt.entry.date, site.lat, site.lon, site.timeZone).label : "";
   const first: Letter = {
     subject: `Is ${ASKED_LABEL} available??`,
     meta: "Sent 11:48 pm, from a phone",
-    answer:
+    answer: !avail ? (
+      <>Checking the calendar…</>
+    ) :
       asked?.state === "open" ? (
         <>It is, as of this morning. {FEATURED.weekdayLong} rate, and we can hold it free for a week.</>
       ) : alt ? (
@@ -65,7 +69,7 @@ function Card({ l, i, open, onToggle, className = "" }: { l: Letter; i: number; 
             aria-label={`${l.subject} Show the answer`}
             tabIndex={open ? -1 : 0}
             style={{ backfaceVisibility: "hidden", WebkitBackfaceVisibility: "hidden" }}
-            className="group absolute inset-0 flex flex-col rounded-[20px] border border-ink/10 bg-paper p-5 text-left shadow-[0_18px_40px_-28px_rgba(30,35,64,0.45)] transition hover:-translate-y-1 hover:shadow-[0_26px_50px_-28px_rgba(30,35,64,0.55)]"
+            className="group absolute inset-0 flex flex-col rounded-[20px] border border-ink/10 bg-paper p-5 text-left shadow-[0_18px_40px_-28px_rgba(31,58,46,0.45)] transition hover:-translate-y-1 hover:shadow-[0_26px_50px_-28px_rgba(31,58,46,0.55)]"
           >
             <div className="flex items-start justify-between gap-3">
               <span className="text-[11px] font-semibold text-ink/45">To: {site.email}</span>
@@ -121,7 +125,7 @@ function Card({ l, i, open, onToggle, className = "" }: { l: Letter; i: number; 
 }
 
 export function Letters() {
-  const all = letters();
+  const all = letters(useAvailability());
   const [open, setOpen] = useState<boolean[]>(() => all.map(() => false));
   const turned = open.filter(Boolean).length;
   return (

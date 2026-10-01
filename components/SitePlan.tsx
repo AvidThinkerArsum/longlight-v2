@@ -76,7 +76,7 @@ export function SitePlan({ route, active, compact = false, className = "" }: { r
     [320, 215, "hall", "middle"],
     [146, 146, "terrace", "middle"],
   ];
-  const ink = "#1e2340";
+  const ink = "#1f3a2e";
   return (
     <div className={`relative overflow-hidden ${className}`}>
       <svg viewBox={`0 0 ${W} ${H}`} className="block h-full w-full" role="img" aria-label={`Site plan of ${site.name}: the barn, the front lawn, the orchard, the west terrace and the lane, with the tour route`}>
@@ -156,7 +156,7 @@ export function SitePlan({ route, active, compact = false, className = "" }: { r
         ))}
         {STOP_IDX.map((wi, k) => (
           <g key={k}>
-            <circle cx={WAY[wi][0]} cy={WAY[wi][1]} r={(k === active ? 13 : 10) * (compact ? 1.6 : 1)} fill={k === active ? "#1e2340" : "#f3ece1"} stroke={ink} strokeWidth={compact ? 2 : 1.4} className="transition-all duration-500" />
+            <circle cx={WAY[wi][0]} cy={WAY[wi][1]} r={(k === active ? 13 : 10) * (compact ? 1.6 : 1)} fill={k === active ? "#1f3a2e" : "#f3ece1"} stroke={ink} strokeWidth={compact ? 2 : 1.4} className="transition-all duration-500" />
             <text x={WAY[wi][0]} y={WAY[wi][1] + (compact ? 7.5 : 5)} textAnchor="middle" className={`${compact ? "text-[21px]" : "text-[14px]"} font-bold ${k === active ? "fill-linen" : "fill-ink"}`}>
               {k + 1}
             </text>

@@ -26,7 +26,8 @@ const Ctx = createContext<Booking | null>(null);
 
 export function BookingProvider({ children }: { children: ReactNode }) {
   const [date, setDate] = useState<string>(site.featuredDate);
-  const [guests, setGuests] = useState(120);
+  // The checker opens on the featured couple's date and head count (the hero's intro).
+  const [guests, setGuests] = useState<number>(site.featuredGuests);
   // The checker opens on the weekend day the hero is set on.
   const [day, setDay] = useState<DayFilter>(() => dayOf(site.featuredDate) ?? "sat");
   const [season, setSeason] = useState<SeasonFilter>("all");

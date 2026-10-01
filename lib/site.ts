@@ -38,8 +38,11 @@ const pricing = {
   security: 420,
   securityOver: 150,
 };
-/** The venue's day: doors, music curfew, lights up, lane empty. "HH:MM", 24h. */
-const hours = { start: "15:30", musicEnds: "22:30", lightsUp: "22:45", end: "23:00" };
+/**
+ * The venue's day: rooms open, music curfew, lights up, lane empty. "HH:MM", 24h. Every
+ * "from 10 am", "10 am to 11 pm" and "yours from" on the page reads from here.
+ */
+const hours = { start: "10:00", musicEnds: "22:30", lightsUp: "22:45", end: "23:00" };
 /** Evening tours: which nights, what time, how long. */
 const tour = { nights: ["Tuesday", "Wednesday", "Thursday"], at: "19:30", minutes: 40 };
 const parking = { cars: 90, overflow: 60, overflowMonths: "July to September", shuttleMinutes: 9 };
@@ -69,8 +72,12 @@ export const site = {
    */
   fictional: true,
 
-  /** The Saturday the hero is set on. */
+  /** The Saturday the hero is set on: the featured couple's date, and the estimate's opening date. */
   featuredDate: "2027-06-19",
+  /** The featured couple's head count: the hero intro and the estimate's opening guest count. */
+  featuredGuests: 120,
+  /** The sample couple whose day the hero follows (placeholders; never the owners). Always tagged "sample". */
+  couple: "Ava & Daniel",
   /** The winter date quoted in "The other six days". */
   winterDate: "2027-12-18",
 
@@ -144,47 +151,99 @@ export const site = {
     },
   },
 
-  /** The run of show the hero plays. Times after golden hour follow the real sunset. */
+  /**
+   * The run of show the hero plays, stop by stop: `label` is the caption's heading, `rail`
+   * the short name under the timeline, `place` where on the grounds it happens. Times from
+   * golden hour on follow the real sunset (on the featured date: 8:20, 9:10, 9:40, 10:00).
+   */
   runOfShow: [
     {
-      at: "15:30" as ClockTime,
+      id: "getting-ready",
+      at: "13:00" as ClockTime,
       label: "Getting ready",
-      line: "The loft suite: north light, a steamer, a full-length mirror, and a door that locks.",
+      rail: "Getting ready",
+      place: "Loft suite and tack room",
+      line: "The loft suite: north light, a steamer, a full-length mirror and a door that locks. The other side gets the tack room.",
       focus: { d: [1184, 810, 2.05] as Focus, m: [1184, 780, 1.7] as Focus },
     },
     {
+      id: "first-look",
+      at: "14:30" as ClockTime,
+      label: "First look",
+      rail: "First look",
+      place: "The orchard",
+      line: "At the far end of the orchard rows, out of sight of the lot. One of you waits facing the trees; the other walks up behind.",
+      focus: { d: [420, 1180, 1.7] as Focus, m: [360, 1160, 1.5] as Focus },
+    },
+    {
+      id: "photos",
+      at: "15:00" as ClockTime,
+      label: "Wedding party & family photos",
+      rail: "Photos",
+      place: "Lawn and orchard",
+      line: "The wedding party on the lawn, then both families under the trees, with a bench in the shade for the grandparents.",
+      focus: { d: [1100, 1180, 1.1] as Focus, m: [1100, 1150, 1.05] as Focus },
+    },
+    {
+      id: "ceremony",
       at: "16:30" as ClockTime,
-      label: "Vows",
-      line: "On the front lawn, facing the doors. If it rains, the doors roll open and you marry just inside.",
+      label: "Ceremony",
+      rail: "Ceremony",
+      place: "The front lawn",
+      line: "Fir benches down 64 ft of aisle, a string trio by the doors. If it rains, the doors roll open and you marry just inside.",
       focus: { d: [1186, 1330, 1.75] as Focus, m: [1186, 1300, 1.9] as Focus },
     },
     {
+      id: "cocktails",
+      at: "17:00" as ClockTime,
+      label: "Cocktail hour",
+      rail: "Cocktails",
+      place: "The orchard",
+      line: "Drinks under the bulb-strung trees and an acoustic duo. The photos are done, so you two get to be at your own cocktail hour.",
+      focus: { d: [760, 1240, 1.35] as Focus, m: [700, 1220, 1.3] as Focus },
+    },
+    {
+      id: "dinner",
       at: "18:30" as ClockTime,
       label: "Dinner beneath the beams",
+      rail: "Dinner",
+      place: "The hall",
       line: `Dinner for up to ${pricing.maxGuests} under the timber trusses. The big doors stay open until the air cools.`,
       focus: { d: [880, 1200, 1.9] as Focus, m: [880, 1180, 1.6] as Focus },
     },
     {
+      id: "golden-hour",
       at: { sunset: -50 } as ClockTime,
-      label: "Golden hour",
+      label: "Golden hour, just the two of you",
+      rail: "Golden hour",
+      place: "The lawn",
       line: "Portraits on the lawn while the clouds go peach, then rose. Nobody has to chase the light.",
       focus: { d: [1330, 700, 1.22] as Focus, m: [1330, 700, 1.05] as Focus },
     },
     {
+      id: "sunset",
       at: { sunset: 0 } as ClockTime,
       label: "Sunset",
+      rail: "Sunset",
+      place: "Behind the cupola",
       line: "Straight down behind the cupola. We move the toasts so everyone turns around in time.",
       focus: { d: [1196, 720, 1.5] as Focus, m: [1230, 700, 1.35] as Focus },
     },
     {
+      id: "first-dance",
       at: { sunset: 30 } as ClockTime,
-      label: "First dance",
-      line: "The windows come on one by one, the sconces wash the siding, and the bulbs light up over the lawn.",
+      label: "First dance & dance party",
+      rail: "First dance",
+      place: "West terrace, 30 × 40 ft floor",
+      line: "Your first dance, then the band on the terrace fills the floor. The windows come on one by one, and the bulbs over the lawn.",
       focus: { d: [1190, 1150, 1.3] as Focus, m: [1188, 1000, 1.12] as Focus },
     },
     {
+      id: "send-off",
       at: { sunset: 50 } as ClockTime,
       label: "Sparkler send-off",
+      rail: "Sparklers",
+      place: "The front walk",
       line: `Two lines down the front walk, the doors lit behind you. Music ends at ${clock(hours.musicEnds)}; the lane is lit to the road.`,
       focus: { d: [1195, 1350, 1.55] as Focus, m: [1200, 1330, 1.5] as Focus },
     },
@@ -260,7 +319,7 @@ export const site = {
     {
       id: "lawn",
       name: "The front lawn",
-      when: "Vows",
+      when: "Ceremony",
       photo: "lawn" as const,
       capacity: "180 seated on fir benches",
       size: "The aisle is 64 ft of paver walk",
@@ -270,12 +329,12 @@ export const site = {
     {
       id: "orchard",
       name: "The orchard",
-      when: "Cocktail hour",
+      when: "First look & cocktail hour",
       photo: "orchard" as const,
       capacity: `${pricing.maxGuests} standing, 60 at the long table`,
       size: "40 apple and pear trees, strung with bulbs",
       rain: "The covered porch: 120 standing, heaters on.",
-      line: "Cocktails under the trees while we turn the hall. Rehearsal dinners happen at the long table here, too.",
+      line: "The first look at the end of the rows, then cocktails under the trees while we turn the hall. Rehearsal dinners happen at the long table here, too.",
     },
     {
       id: "hall",
@@ -290,12 +349,12 @@ export const site = {
     {
       id: "terrace",
       name: "The west terrace",
-      when: "First dance & send-off",
+      when: "First dance & dance party",
       photo: "terrace" as const,
       capacity: "160 standing, 30 × 40 ft dance floor",
       size: "Faces the sunset, lit to the lane",
       rain: "The dance floor moves inside; the doors stay open.",
-      line: "Where the sun goes down behind the fields. The sparkler line runs from here to the front walk.",
+      line: "Where the sun goes down behind the fields. The band sets up on the terrace, the floor fills after your first dance, and the sparkler line forms out front.",
     },
   ],
   /** "Book with the people": in the owners' words. */
@@ -346,7 +405,7 @@ export const site = {
     {
       subject: "Where do we get ready?",
       meta: "Sent Sunday, 9:40 am",
-      answer: "The loft suite (north light, a steamer, a full-length mirror, a door that locks) and the tack room for the other side. Both yours from 10 am.",
+      answer: `The loft suite (north light, a steamer, a full-length mirror, a door that locks) and the tack room for the other side. Both yours from ${clock(hours.start, true)}.`,
     },
     {
       subject: "Can our dog be in the ceremony?",

@@ -123,7 +123,7 @@ export function BokehStrand({
           <motion.div style={{ opacity: wire }} className="absolute inset-0">
             <svg viewBox="0 0 1000 640" preserveAspectRatio="none" className="absolute inset-0 h-full w-full overflow-visible">
               {/* as far out of focus as the bulbs on it */}
-              <path d={d} fill="none" stroke="#05071a" strokeWidth={6} strokeLinecap="round" style={{ filter: "blur(4.5px)" }} vectorEffect="non-scaling-stroke" />
+              <path d={d} fill="none" stroke="#061710" strokeWidth={6} strokeLinecap="round" style={{ filter: "blur(4.5px)" }} vectorEffect="non-scaling-stroke" />
             </svg>
           </motion.div>
           {pts.map((b, i) => (
@@ -143,11 +143,11 @@ export function CrispStrand({ count = 16, className = "" }: { count?: number; cl
   return (
     <div aria-hidden className={`pointer-events-none relative h-[96px] overflow-hidden ${className}`}>
       <svg viewBox="0 0 1000 96" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
-        <path d={`M-40 0 ${d.slice(1)} L1040 0`} fill="none" stroke="#0b0e22" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+        <path d={`M-40 0 ${d.slice(1)} L1040 0`} fill="none" stroke="#0c1f16" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
       </svg>
       {pts.map((p, i) => (
         <div key={i} className="absolute" style={{ left: `${p.x}%`, top: p.y - 2 }}>
-          <div className="absolute left-1/2 top-0 h-[7px] w-[5px] -translate-x-1/2 rounded-[1px] bg-[#0b0e22]" />
+          <div className="absolute left-1/2 top-0 h-[7px] w-[5px] -translate-x-1/2 rounded-[1px] bg-[#0c1f16]" />
           <div
             className="glow absolute left-1/2 top-[6px] h-[15px] w-[13px] -translate-x-1/2 rounded-[50%_50%_46%_46%]"
             style={{ background: "radial-gradient(circle at 50% 42%, #fff6dc 0%, #ffd58f 45%, #f4a950 100%)", boxShadow: "0 0 18px 6px rgba(255,186,100,0.45), 0 0 46px 14px rgba(255,170,90,0.18)", animationDelay: `${(i % 5) * -1.3}s` }}

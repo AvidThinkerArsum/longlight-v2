@@ -33,28 +33,38 @@ export const WINTER = {
   short: w.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" }),
 };
 
-// Scroll layout: a short hold on the landing frame, the seven stops, then the close.
+// Scroll layout: a short hold on the landing frame (the couple's intro), the stops spread
+// evenly, then the close. The hero's pinned height grows with the number of stops (see
+// .hero-pin in globals.css), so each stop keeps about the same scroll distance.
 export const LANDING_END = 0.035;
 const FIRST = 0.085;
 const LAST = 0.875;
 export const CLOSE_AT = 0.965;
+/** Scroll progress between two neighbouring stops. */
+export const STEP = (LAST - FIRST) / Math.max(1, site.runOfShow.length - 1);
 
 export type Stop = {
+  id: string;
   p: number;
   minutes: number;
   time: string;
   label: string;
+  rail: string;
+  place: string;
   line: string;
   focus: { d: Focus; m: Focus };
 };
 
-export const STOPS: Stop[] = site.runOfShow.map((s, i, all) => {
+export const STOPS: Stop[] = site.runOfShow.map((s, i) => {
   const minutes = resolveTime(s.at);
   return {
-    p: FIRST + (i * (LAST - FIRST)) / (all.length - 1),
+    id: s.id,
+    p: FIRST + i * STEP,
     minutes,
     time: clockLabel(minutes),
     label: s.label,
+    rail: s.rail,
+    place: s.place,
     line: s.line,
     focus: s.focus,
   };

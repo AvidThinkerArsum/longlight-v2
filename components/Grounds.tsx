@@ -11,7 +11,8 @@ import { CrispStrand } from "@/components/Bulbs";
 import { Sample } from "@/components/ui/Sample";
 import { Words } from "@/components/ui/Reveal";
 import { scrollToId, useBooking } from "@/components/Booking";
-import { formatDate, lookup } from "@/lib/availability";
+import { formatDate } from "@/lib/availability";
+import { useAvailability } from "@/lib/useAvailability";
 import { site } from "@/lib/site";
 import { clockLabel } from "@/lib/sun";
 
@@ -75,7 +76,8 @@ function Panel({ i, width, shown = true }: { i: number; width?: number; shown?: 
 
 function TourCard({ width, shown = true }: { width?: number; shown?: boolean }) {
   const { date, setTour } = useBooking();
-  const entry = lookup(date);
+  const avail = useAvailability();
+  const entry = avail?.lookup(date);
   const nice = formatDate(date, { weekday: "short", month: "short", day: "numeric" });
   return (
     <article style={{ width }} className={`relative flex h-full shrink-0 flex-col overflow-hidden rounded-[24px] bg-ink text-linen ${width ? "" : "w-full"}`}>
@@ -116,7 +118,7 @@ function TourCard({ width, shown = true }: { width?: number; shown?: boolean }) 
               <dt className="text-ink/45">Holding</dt>
               <dd className="font-bold tabular-nums">
                 {nice}
-                {entry?.state === "open" ? null : <span className="ml-1 font-semibold text-rose">({entry ? entry.state : "weekday"})</span>}
+                {!avail || entry?.state === "open" ? null : <span className="ml-1 font-semibold text-rose">({entry ? entry.state : "weekday"})</span>}
               </dd>
             </div>
           </dl>

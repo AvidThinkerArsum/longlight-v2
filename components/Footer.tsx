@@ -1,6 +1,5 @@
 import { site } from "@/lib/site";
 import { CrispStrand } from "@/components/Bulbs";
-import data from "@/lib/availability.json";
 
 const CREDITS: { key: keyof typeof site.photos; what: string }[] = [
   { key: "hero", what: "The barn" },
@@ -67,7 +66,7 @@ export function Footer() {
         </div>
         {site.showConceptBanner ? (
           <p className="mt-12 border-t border-linen/10 pt-6 text-[12px] text-linen/40">
-            {site.fictional ? "A concept page" : `An unofficial concept for ${site.name}`}. Sample availability, generated {data.generated}.
+            {site.fictional ? "A concept page" : `An unofficial concept for ${site.name}`}. Sample availability, rolled forward from today.
           </p>
         ) : null}
       </div>

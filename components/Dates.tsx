@@ -1,7 +1,8 @@
 "use client";
 
 // "Is your date still free?" — the email couples send to ten venues, answered in place:
-// 18 months of weekends, what each costs, what's left, and an itemized estimate.
+// 18 months of weekends from the current month (rolled in the browser, see useAvailability),
+// what each costs, what's left, and an itemized estimate.
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -13,11 +14,9 @@ import {
   DAY_NAMES,
   DAY_SHORT,
   HOURS,
-  MONTHS,
-  alternative,
+  WINDOW_MONTHS,
   estimate,
   formatDate,
-  lookup,
   money,
   openCount,
   ordinal,
@@ -27,6 +26,7 @@ import {
   type Day,
   type Month,
 } from "@/lib/availability";
+import { useAvailability } from "@/lib/useAvailability";
 import { site } from "@/lib/site";
 
 const DAY_FILTERS: { id: DayFilter; label: string }[] = [
@@ -46,7 +46,7 @@ function Chip({ d, selected, onPick, compact }: { d: DateEntry; selected: boolea
   const label = `${DAY_NAMES[d.day]}, ${formatDate(d.date, { month: "long", day: "numeric", year: "numeric" })}: ${d.state === "open" ? `open, from ${money(priceOf(d))}` : d.state === "held" ? `held until ${formatDate(d.heldUntil!, { month: "short", day: "numeric" })}` : "booked"}`;
   const base = "relative w-full rounded-xl border text-left transition focus-visible:outline-2";
   const tone = selected
-    ? "border-ink bg-ink text-linen shadow-[0_6px_20px_-8px_rgba(30,35,64,0.6)]"
+    ? "border-ink bg-ink text-linen shadow-[0_6px_20px_-8px_rgba(31,58,46,0.6)]"
     : d.state === "open"
       ? "border-ink/15 bg-paper text-ink hover:border-ink/50"
       : d.state === "held"
@@ -142,9 +142,11 @@ export function Dates() {
   const { date, setDate, guests, setGuests, day, season, setFilter } = useBooking();
   const reduce = useReducedMotion();
   const rail = useRef<HTMLDivElement>(null);
-  const entry = lookup(date);
-  const months = useMemo(() => (season === "all" ? MONTHS : MONTHS.filter((m) => seasonOf(`${m.key}-15`) === season)), [season]);
-  const month = MONTHS.find((m) => m.key === date.slice(0, 7));
+  // null until hydrated: the calendar is rolled from today, in the browser.
+  const avail = useAvailability();
+  const entry = avail?.lookup(date);
+  const months = useMemo(() => (!avail ? [] : season === "all" ? avail.months : avail.months.filter((m) => seasonOf(`${m.key}-15`) === season)), [avail, season]);
+  const month = avail?.month(date.slice(0, 7));
   const scarcityDay: Day = day === "all" ? (entry?.day ?? "sat") : day;
   const left = month ? openCount(month, scarcityDay) : 0;
 
@@ -196,13 +198,13 @@ export function Dates() {
 
   const pick = (d: DateEntry) => setDate(d.date);
   const est = entry ? estimate(entry, guests) : null;
-  const alt = entry && entry.state !== "open" ? alternative(entry) : null;
+  const alt = avail && entry && entry.state !== "open" ? avail.alternative(entry) : null;
   const P = site.pricing;
   const fill = ((guests - P.minGuests) / (P.maxGuests - P.minGuests)) * 100;
 
   function jump(value: string) {
     if (!value) return;
-    const hit = lookup(value);
+    const hit = avail?.lookup(value);
     if (hit) {
       if (day !== "all" && day !== hit.day) setFilter({ day: hit.day, season: "all" });
       else if (season !== "all" && seasonOf(value) !== season) setFilter({ day, season: "all" });
@@ -264,8 +266,8 @@ export function Dates() {
                 <input
                   type="date"
                   value={date}
-                  min={MONTHS[0].dates[0].date}
-                  max={MONTHS[MONTHS.length - 1].dates.at(-1)!.date}
+                  min={avail?.dates[0]?.date}
+                  max={avail?.dates.at(-1)?.date}
                   onChange={(e) => jump(e.target.value)}
                   className="rounded-full border border-ink/20 bg-paper px-3 py-1.5 text-[13px] font-semibold text-ink tabular-nums"
                   aria-label="Your date"
@@ -275,7 +277,9 @@ export function Dates() {
 
             <div className="mt-5 flex flex-wrap items-baseline justify-between gap-3">
               <p className="display text-[1.55rem] leading-tight sm:text-[1.8rem]" aria-live="polite">
-                {month ? (
+                {!avail ? (
+                  <span className="invisible">Checking the calendar</span>
+                ) : month ? (
                   <>
                     <em className={left <= 2 ? "text-rose" : ""}>{left === 0 ? "No" : left}</em> {plural(scarcityDay, left).replace(/^\d+ /, "")} left in {month.label} {month.year}
                     <Sample />
@@ -307,20 +311,20 @@ export function Dates() {
               ref={rail}
               onScroll={measure}
               style={{ maskImage: railMask, WebkitMaskImage: railMask }}
-              className="no-scrollbar relative -mx-4 mt-5 flex snap-x scroll-pl-4 gap-4 overflow-x-auto px-4 pb-2 sm:-mx-7 sm:scroll-pl-7 sm:gap-5 sm:px-7"
+              className={`no-scrollbar relative -mx-4 mt-5 flex snap-x scroll-pl-4 gap-4 overflow-x-auto px-4 pb-2 sm:-mx-7 sm:scroll-pl-7 sm:gap-5 sm:px-7 ${avail ? "" : "min-h-[340px]"}`}
             >
               {months.map((m) => (
                 <MonthColumn key={m.key} m={m} day={day} selected={date} onPick={pick} />
               ))}
             </div>
             <p className="mt-4 text-[12px] text-ink/50">
-              {months.length} months of weekends<span className="sm:hidden">, swipe for more</span>. Prices include up to {P.includedGuests} guests, {HOURS}.
+              {avail ? months.length : WINDOW_MONTHS} months of weekends<span className="sm:hidden">, swipe for more</span>. Prices include up to {P.includedGuests} guests, {HOURS}.
               <Sample />
             </p>
           </div>
 
           {/* the estimate */}
-          <aside aria-label="Your estimate" className="min-w-0 rounded-[26px] bg-[#252b4d] p-5 ring-1 ring-linen/10 sm:p-7 lg:sticky lg:top-24 lg:self-start">
+          <aside aria-label="Your estimate" className="min-w-0 rounded-[26px] bg-[#264638] p-5 ring-1 ring-linen/10 sm:p-7 lg:sticky lg:top-24 lg:self-start">
             <p className="eyebrow text-linen/60">Your date</p>
             <AnimatePresence mode="wait" initial={false}>
               <motion.div key={date} initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }}>
@@ -328,7 +332,7 @@ export function Dates() {
                   {entry ? DAY_NAMES[entry.day] : formatDate(date, { weekday: "long" })}, {formatDate(date, { month: "long", day: "numeric" })}
                   <span className="ml-2 font-sans text-[13px] font-semibold text-linen/50 tabular-nums">{date.slice(0, 4)}</span>
                 </p>
-                {!entry ? (
+                {!avail ? null : !entry ? (
                   <p className="mt-3 text-[14px] leading-relaxed text-linen/75">
                     Weddings are Friday to Sunday. Weekdays are for offsites and rehearsal dinners, from {money(site.pricing.weekday)}.
                   </p>
