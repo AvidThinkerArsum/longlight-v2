@@ -20,6 +20,51 @@ export type Focus = [x: number, y: number, zoom: number];
 /** A clock time: "HH:MM" (24h), or minutes relative to that day's sunset. */
 export type ClockTime = string | { sunset: number };
 
+/**
+ * A stock frame for the hero's scenes: a Pexels photo, or a Pexels clip's poster frame.
+ * `src(w)` asks Pexels for a copy `w` pixels wide; `page` is where the credit links.
+ */
+export type Still = { id: string; by: string; alt: string; w: number; h: number; src: (w: number) => string; page: string };
+/** A scene camera: focal point as fractions of the frame (0–1), and zoom over "cover". */
+export type Cam = [fx: number, fy: number, zoom: number];
+/**
+ * One shot of a scene. The camera drifts from the first `d`/`m` to the second over the shot
+ * (a slow Ken Burns). `clip` plays muted over the still on desktop only; `phone` swaps in
+ * a different still on phones (a portrait frame, say), framed by `m`. `cut` is where the
+ * shot takes over within its stop, in stops from the stop itself (negative: before it).
+ */
+export type Shot = { still: Still; clip?: string; phone?: Still; d: [Cam, Cam]; m: [Cam, Cam]; cut?: number };
+/**
+ * How the camera gets to a scene from the stop before it: pushes in, drops down, pulls
+ * wide, drifts forward, slides across, glides through doors, comes in low, eases down.
+ */
+export type Move = "push" | "drop" | "wide" | "drift" | "slide" | "glide" | "low" | "ease";
+/** How the camera comes back to the barn from a scene: rising over it, or pulling back. */
+export type Back = "rise" | "pull";
+export type Scene = { move: Move; shots: Shot[] };
+
+const photo = (id: string, by: string, alt: string, w = 2400, h = 1600): Still => ({
+  id,
+  by,
+  alt,
+  w,
+  h,
+  src: (px: number) => pexels(id, px),
+  page: `https://www.pexels.com/photo/${id}/`,
+});
+/** A Pexels clip's poster frame (1920 × 1080), named by the slug Pexels gives it. */
+const poster = (id: string, slug: string, by: string, alt: string): Still => ({
+  id,
+  by,
+  alt,
+  w: 1920,
+  h: 1080,
+  src: (px: number) => `https://images.pexels.com/videos/${id}/${slug}.jpeg?auto=compress&cs=tinysrgb&w=${Math.min(px, 1920)}`,
+  page: `https://www.pexels.com/video/${id}/`,
+});
+/** A Pexels clip file (the 1280 × 720 renditions: 1.4 to 2 MB each). */
+const clipFile = (id: string, file: string) => `https://videos.pexels.com/video-files/${id}/${file}`;
+
 /** Guest limits and prices; referenced by the copy below so the numbers never disagree. */
 const pricing = {
   /** Which months (1–12) each season covers. */
@@ -83,9 +128,9 @@ export const site = {
 
   photos: {
     hero: {
-      id: "18032329",
-      src: pexels("18032329"),
-      alt: "The front of a white gambrel barn with two sliding wooden doors, black-framed windows and a cupola, under a summer sky",
+      id: "29781785",
+      src: pexels("29781785"),
+      alt: "The front of a modern white board-and-batten barn: a glass gable end of twelve black-framed windows, a white sliding door on a black rail, black doors and lanterns, and steps up a striped lawn",
       by: "Steven Van Elk",
     },
     lawn: { id: "18032331", src: pexels("18032331", 1600), alt: "Rows of wooden benches on the lawn facing the barn's white doors", by: "Steven Van Elk" },
@@ -94,6 +139,15 @@ export const site = {
     loft: { id: "37713508", src: pexels("37713508", 1600), alt: "A wedding dress hanging by a tall mullioned window in a bright room", by: "Alexander Mass" },
     orchard: { id: "7143718", src: pexels("7143718", 1600), alt: "A table laid with fruit under apple trees heavy with apples, on a sunny lawn", by: "Mariam Gab" },
     owners: { id: "7728690", src: pexels("7728690", 1600), alt: "Two smiling owners standing together in a field on a spring day", by: "Greta Hoffman" },
+    /** "Walk the grounds": the wide views, shown large, with the close-ups above as insets. */
+    orchardWide: { id: "32343728", src: pexels("32343728", 1920), alt: "From the air: diagonal rows of young green orchard trees casting long shadows across the grass", by: "Nikola Tomasic" },
+    hallWide: {
+      id: "34580061",
+      src: pexels("34580061", 1920),
+      alt: "A wide white barn hall under white trusses and chandeliers, with black-framed windows and French doors, round tables full of guests watching a first dance",
+      by: "Taylor Thompson",
+    },
+    aerial: { id: "10421037", src: pexels("10421037", 1600), alt: "From the air at golden hour: a white barn with a metal roof among green fields and tree lines", by: "Tom Fisk" },
   },
 
   /**
@@ -103,51 +157,55 @@ export const site = {
   hero: {
     size: { w: 2400, h: 1600 },
     hasSky: true,
+    /**
+     * An overcast photo: its sky is painted clear by day (`skyClear` in the light), and its
+     * clouds are the brighter streaks of the overcast, between these two luminances.
+     */
+    overcast: { clouds: [231, 239] as [number, number] },
+    /** A light grade on the photo itself (this one was shot in November: a little more summer). */
+    grade: "saturate(1.14) contrast(1.04)",
     /** Runs along the top of the roof's dark edge; only bright pixels above it count as sky. */
     skyline: [
-      [0, 1250], [234, 1250], [238, 1206], [244, 1205], [898, 972], [1000, 836], [1040, 782],
-      [1046, 748], [1051, 652], [1308, 652], [1318, 738], [1322, 778], [1467, 974], [1941, 1128],
-      [1958, 1127], [2204, 1150], [2207, 1172], [2400, 1172],
+      [0, 1000], [27, 1004], [178, 969], [632, 966], [872, 894], [873, 844], [1070, 568], [1287, 461],
+      [1508, 562], [1715, 838], [1716, 889], [2031, 979], [2240, 976], [2306, 1030], [2340, 1040], [2400, 1030],
     ] as Pt[],
     /** Window glass, in the order the lights come on. Each window may have several panes. */
     windows: [
-      { id: "front-doors", panes: [[1137, 1257, 35, 80], [1198, 1257, 37, 80]] as Rect[] },
-      { id: "transom-mid", panes: [[1171, 1172, 27, 42]] as Rect[] },
-      { id: "transom-left", panes: [[1126, 1172, 27, 42]] as Rect[] },
-      { id: "transom-right", panes: [[1216, 1172, 27, 42]] as Rect[] },
-      { id: "west-doors", panes: [[701, 1256, 39, 83], [762, 1256, 40, 83]] as Rect[] },
-      { id: "east-doors", panes: [[1565, 1255, 36, 81], [1626, 1255, 36, 81]] as Rect[] },
-      { id: "gable-low", panes: [[1169, 926, 29, 40]] as Rect[] },
-      { id: "west-2", panes: [[490, 1240, 33, 42]] as Rect[] },
-      { id: "east-1", panes: [[1842, 1235, 32, 41]] as Rect[] },
-      { id: "west-1", panes: [[369, 1240, 32, 42]] as Rect[] },
-      { id: "east-2", panes: [[1961, 1234, 32, 42]] as Rect[] },
-      { id: "loft", panes: [[1169, 755, 29, 38]] as Rect[] },
+      { id: "west-door", panes: [[957, 1048, 42, 52], [957, 1106, 42, 44]] as Rect[] },
+      { id: "east-door", panes: [[1589, 1045, 47, 53], [1589, 1107, 47, 43]] as Rect[] },
+      { id: "gable-low-mid", panes: [[1215, 839, 63, 93], [1306, 838, 63, 93]] as Rect[] },
+      { id: "west-windows", panes: [[706, 1043, 59, 92], [777, 1043, 58, 92]] as Rect[] },
+      { id: "east-windows", panes: [[1758, 1037, 60, 96], [1830, 1037, 62, 96]] as Rect[] },
+      { id: "gable-low-west", panes: [[1016, 840, 64, 92], [1115, 839, 63, 93]] as Rect[] },
+      { id: "gable-low-east", panes: [[1406, 838, 63, 93], [1505, 837, 63, 93]] as Rect[] },
+      { id: "gable-mid", panes: [[1214, 719, 63, 90], [1304, 718, 63, 91]] as Rect[] },
+      { id: "gable-mid-west", panes: [[1115, 719, 63, 91]] as Rect[] },
+      { id: "gable-mid-east", panes: [[1404, 718, 63, 91]] as Rect[] },
+      { id: "loft", panes: [[1214, 626, 62, 61], [1302, 625, 63, 62]] as Rect[] },
+      { id: "west-wing", panes: [[320, 1060, 54, 64], [488, 1060, 53, 80]] as Rect[] },
     ],
-    /** Gooseneck sconces: where the shade's mouth is, and how far the wash falls. */
+    /** Lanterns either side of the big door: where the glass is, and how far the wash falls. */
     lamps: [
-      { at: [977, 982] as Pt, reach: 150 },
-      { at: [1396, 988] as Pt, reach: 150 },
-      { at: [746, 1160] as Pt, reach: 190 },
-      { at: [1621, 1156] as Pt, reach: 190 },
+      { at: [1031, 1050] as Pt, reach: 130 },
+      { at: [1562, 1048] as Pt, reach: 130 },
     ],
     /**
      * Where the doors throw light onto the path, and where the send-off lines up. `horizon`
      * is the camera's eye level (y), which sets the perspective of the sparkler lines.
      */
-    path: { door: [1186, 1384] as Pt, near: [1215, 1590] as Pt, horizon: 1290 },
+    path: { door: [1292, 1160] as Pt, near: [1302, 1596] as Pt, horizon: 1150 },
     /**
      * The sun's track through golden hour: `from` about two and a half hours before sunset,
-     * `to` at the minute of sunset (half behind the roofline). It keeps going past `to`.
+     * `to` at the minute of sunset (half behind the peak of the roof). It keeps going past `to`.
      */
-    sun: { from: [1440, 520] as Pt, to: [1290, 664] as Pt, r: 32 },
+    sun: { from: [1470, 250] as Pt, to: [1290, 482] as Pt, r: 32 },
     /** Camera stops (desktop, phone). */
     focus: {
-      // (the desktop landing frame stops short of the trailer and the field at the far right)
-      landing: { d: [1100, 820, 1.15] as Focus, m: [1188, 820, 1] as Focus },
+      // (desktop: the barn sits right of centre, clear of the headline)
+      landing: { d: [980, 760, 1.12] as Focus, m: [1290, 820, 1] as Focus },
       // (phones: tilted up, so the close sits in the sky above the strand of bulbs)
-      close: { d: [1200, 980, 1.08] as Focus, m: [1190, 560, 1.15] as Focus },
-      relit: { d: [1150, 1000, 1.25] as Focus, m: [1188, 1080, 1.05] as Focus },
+      close: { d: [1290, 900, 1.08] as Focus, m: [1290, 520, 1.15] as Focus },
+      relit: { d: [1290, 880, 1.22] as Focus, m: [1290, 900, 1.05] as Focus },
     },
   },
 
@@ -164,7 +222,36 @@ export const site = {
       rail: "Getting ready",
       place: "Loft suite and tack room",
       line: "The loft suite: north light, a steamer, a full-length mirror and a door that locks. The other side gets the tack room.",
-      focus: { d: [1184, 810, 2.05] as Focus, m: [1184, 780, 1.7] as Focus },
+      // the barn camera pushes in to the loft windows, and through them
+      focus: { d: [1290, 660, 6] as Focus, m: [1290, 660, 6.5] as Focus },
+      scene: {
+        move: "push",
+        shots: [
+          {
+            still: photo("18354035", "Stephen Leonardi", "A beaded strapless wedding dress hanging on a plank wall beside a tall many-paned window"),
+            d: [[0.45, 0.55, 1.1], [0.48, 0.56, 1.2]],
+            m: [[0.52, 0.58, 1.04], [0.52, 0.58, 1.14]],
+          },
+          {
+            // the point-of-view moment: hands on the dress
+            still: poster("19742326", "pre-wedding-19742326", "Cinema Vlog", "Over a bride's shoulder as her mother, laughing, fastens the back of her dress by a window"),
+            clip: clipFile("19742326", "19742326-hd_1280_720_50fps.mp4"),
+            phone: photo("34327733", "Reborn Filmes", "The bride and her bridesmaids in blush robes, laughing and raising their glasses", 2400, 3600),
+            d: [[0.5, 0.45, 1.06], [0.5, 0.45, 1.14]],
+            m: [[0.52, 0.5, 1.02], [0.52, 0.48, 1.12]],
+            cut: 0.1,
+          },
+          {
+            // quick cut to the groom's side
+            still: poster("16958794", "pexels-photo-16958794", "Harvey Tan Villarino", "A groom in a white shirt fastening his cuff by a tall window"),
+            clip: clipFile("16958794", "16958794-hd_1280_720_50fps.mp4"),
+            phone: photo("27691950", "Anastasia Nagibina", "Groomsmen in black tuxedos laughing as they button their jackets"),
+            d: [[0.56, 0.5, 1.06], [0.56, 0.5, 1.14]],
+            m: [[0.58, 0.5, 1.02], [0.6, 0.5, 1.1]],
+            cut: 0.3,
+          },
+        ],
+      } as Scene,
     },
     {
       id: "first-look",
@@ -173,7 +260,23 @@ export const site = {
       rail: "First look",
       place: "The orchard",
       line: "At the far end of the orchard rows, out of sight of the lot. One of you waits facing the trees; the other walks up behind.",
-      focus: { d: [420, 1180, 1.7] as Focus, m: [360, 1160, 1.5] as Focus },
+      focus: { d: [1290, 660, 6] as Focus, m: [1290, 660, 6.5] as Focus },
+      scene: {
+        move: "drop",
+        shots: [
+          {
+            still: photo("29237402", "Photography Maghradze PH", "A groom in a navy tuxedo waits, smiling, as the bride walks up behind him through a leafy, sunlit garden"),
+            d: [[0.58, 0.44, 1.1], [0.6, 0.42, 1.2]],
+            m: [[0.62, 0.45, 1.02], [0.64, 0.42, 1.1]],
+          },
+          {
+            still: photo("7119241", "Pavel Danilyuk", "The couple holding each other in a grassy meadow ringed by fir trees, with a lake behind", 2400, 1602),
+            d: [[0.5, 0.5, 1.08], [0.48, 0.52, 1.18]],
+            m: [[0.48, 0.55, 1.02], [0.48, 0.55, 1.12]],
+            cut: 0.18,
+          },
+        ],
+      } as Scene,
     },
     {
       id: "photos",
@@ -182,7 +285,23 @@ export const site = {
       rail: "Photos",
       place: "Lawn and orchard",
       line: "The wedding party on the lawn, then both families under the trees, with a bench in the shade for the grandparents.",
-      focus: { d: [1100, 1180, 1.1] as Focus, m: [1100, 1150, 1.05] as Focus },
+      focus: { d: [1290, 660, 6] as Focus, m: [1290, 660, 6.5] as Focus },
+      scene: {
+        move: "wide",
+        shots: [
+          {
+            still: photo("35029571", "Kevin Barillas", "The wedding party lined up on a lawn under big trees: groomsmen in navy vests on one side, bridesmaids in dusty blue on the other"),
+            d: [[0.5, 0.56, 1.2], [0.5, 0.56, 1.06]],
+            m: [[0.535, 0.58, 1.14], [0.535, 0.58, 1.02]],
+          },
+          {
+            still: photo("6609722", "Juliana Navajas Robb", "Both families gathered around the couple behind a wooden rail, under the trees"),
+            d: [[0.5, 0.55, 1.06], [0.48, 0.55, 1.14]],
+            m: [[0.45, 0.55, 1.02], [0.45, 0.55, 1.1]],
+            cut: 0.18,
+          },
+        ],
+      } as Scene,
     },
     {
       id: "ceremony",
@@ -191,7 +310,24 @@ export const site = {
       rail: "Ceremony",
       place: "The front lawn",
       line: "Fir benches down 64 ft of aisle, a string trio by the doors. If it rains, the doors roll open and you marry just inside.",
-      focus: { d: [1186, 1330, 1.75] as Focus, m: [1186, 1300, 1.9] as Focus },
+      focus: { d: [1290, 660, 6] as Focus, m: [1290, 660, 6.5] as Focus },
+      scene: {
+        move: "drift",
+        shots: [
+          {
+            // the point-of-view moment: the view down the aisle, drifting toward the arch
+            still: photo("17206059", "Bertelli Fotografia", "Looking down a long paved aisle between plain wooden benches, lined with flowers, to a floral arch among tall firs"),
+            d: [[0.5, 0.62, 1.06], [0.5, 0.5, 1.7]],
+            m: [[0.5, 0.6, 1.02], [0.5, 0.5, 1.55]],
+          },
+          {
+            still: photo("18541917", "Douglas Ma", "From behind the seated guests: the couple before the officiant at a floral arch, flowers along the aisle, forested hills behind"),
+            d: [[0.5, 0.6, 1.14], [0.51, 0.6, 1.24]],
+            m: [[0.5, 0.62, 1.04], [0.5, 0.62, 1.14]],
+            cut: -0.12,
+          },
+        ],
+      } as Scene,
     },
     {
       id: "cocktails",
@@ -200,7 +336,24 @@ export const site = {
       rail: "Cocktails",
       place: "The orchard",
       line: "Drinks under the bulb-strung trees and an acoustic duo. The photos are done, so you two get to be at your own cocktail hour.",
-      focus: { d: [760, 1240, 1.35] as Focus, m: [700, 1220, 1.3] as Focus },
+      focus: { d: [1290, 660, 6] as Focus, m: [1290, 660, 6.5] as Focus },
+      scene: {
+        move: "slide",
+        shots: [
+          {
+            // the wide orchard shot (the same one "Walk the grounds" shows big)
+            still: photo("32343728", "Nikola Tomasic", "From the air: diagonal rows of young green orchard trees casting long shadows across the grass"),
+            d: [[0.42, 0.5, 1.16], [0.58, 0.5, 1.16]],
+            m: [[0.4, 0.5, 1.02], [0.6, 0.5, 1.02]],
+          },
+          {
+            still: photo("26975888", "Hello Josh Withers", "A long candlelit table and wooden chairs on a lawn under big leafy trees, bulbs strung overhead", 2400, 1601),
+            d: [[0.5, 0.62, 1.1], [0.5, 0.64, 1.2]],
+            m: [[0.5, 0.68, 1.02], [0.52, 0.68, 1.1]],
+            cut: 0.2,
+          },
+        ],
+      } as Scene,
     },
     {
       id: "dinner",
@@ -209,7 +362,25 @@ export const site = {
       rail: "Dinner",
       place: "The hall",
       line: `Dinner for up to ${pricing.maxGuests} under the timber trusses. The big doors stay open until the air cools.`,
-      focus: { d: [880, 1200, 1.9] as Focus, m: [880, 1180, 1.6] as Focus },
+      focus: { d: [1290, 660, 6] as Focus, m: [1290, 660, 6.5] as Focus },
+      scene: {
+        move: "glide",
+        shots: [
+          {
+            still: photo("33524591", "Florence", "Long tables with cross-back chairs and bud vases down a timber barn hall, bulbs strung under the trusses", 2400, 1800),
+            d: [[0.48, 0.52, 1.06], [0.5, 0.5, 1.18]],
+            m: [[0.42, 0.56, 1.02], [0.44, 0.55, 1.1]],
+          },
+          {
+            // the point-of-view moment: the room turning to toast
+            still: photo("5130326", "Rafael Bertacini", "From inside the circle: the laughing couple and their guests reaching their glasses toward the camera"),
+            d: [[0.5, 0.74, 1.3], [0.52, 0.75, 1.36]],
+            // (phones: down from the bright sky to the faces)
+            m: [[0.55, 0.8, 1.45], [0.56, 0.8, 1.55]],
+            cut: 0.2,
+          },
+        ],
+      } as Scene,
     },
     {
       id: "golden-hour",
@@ -218,16 +389,29 @@ export const site = {
       rail: "Golden hour",
       place: "The lawn",
       line: "Portraits on the lawn while the clouds go peach, then rose. Nobody has to chase the light.",
-      focus: { d: [1330, 700, 1.22] as Focus, m: [1330, 700, 1.05] as Focus },
+      // (barn camera, unseen here: down on the lawn, ready to rise to the ridge for sunset)
+      focus: { d: [1290, 1330, 1.8] as Focus, m: [1290, 1330, 1.7] as Focus },
+      scene: {
+        move: "low",
+        shots: [
+          {
+            still: photo("34580060", "Taylor Thompson", "Just the two of them, small on a wide mown lawn before a golden field under a soft peach sky", 2400, 1532),
+            d: [[0.46, 0.56, 1.2], [0.54, 0.58, 1.3]],
+            m: [[0.5, 0.6, 1.1], [0.52, 0.6, 1.2]],
+          },
+        ],
+      } as Scene,
     },
     {
       id: "sunset",
       at: { sunset: 0 } as ClockTime,
       label: "Sunset",
       rail: "Sunset",
-      place: "Behind the cupola",
-      line: "Straight down behind the cupola. We move the toasts so everyone turns around in time.",
-      focus: { d: [1196, 720, 1.5] as Focus, m: [1230, 700, 1.35] as Focus },
+      place: "Behind the barn",
+      line: "Straight down behind the peak of the roof. We move the toasts so everyone turns around in time.",
+      // back on the barn: the camera rises off the lawn to the peak
+      focus: { d: [1290, 610, 1.4] as Focus, m: [1300, 560, 1.45] as Focus },
+      back: "rise" as Back,
     },
     {
       id: "first-dance",
@@ -236,7 +420,26 @@ export const site = {
       rail: "First dance",
       place: "West terrace, 30 × 40 ft floor",
       line: "Your first dance, then the band on the terrace fills the floor. The windows come on one by one, and the bulbs over the lawn.",
-      focus: { d: [1190, 1150, 1.3] as Focus, m: [1188, 1000, 1.12] as Focus },
+      // (barn camera: eases down onto the lit glass while the dance comes in over it)
+      focus: { d: [1290, 900, 2.4] as Focus, m: [1290, 900, 2.2] as Focus },
+      scene: {
+        move: "ease",
+        shots: [
+          {
+            still: poster("32009248", "pexels-photo-32009248", "Orhan Pergel", "A couple slow-dancing at night under a line of glowing bulbs, guests at candlelit tables behind"),
+            clip: clipFile("32009248", "13642647_1280_720_25fps.mp4"),
+            phone: photo("10360902", "Amar", "The first dance at night, the couple holding each other under a canopy strung with bulbs"),
+            d: [[0.5, 0.5, 1.06], [0.5, 0.5, 1.14]],
+            m: [[0.58, 0.5, 1.02], [0.58, 0.48, 1.12]],
+          },
+          {
+            still: photo("15964956", "Danik Prihodko", "The floor fills: the couple dancing hand in hand among their guests under swags of fairy lights", 2400, 1602),
+            d: [[0.45, 0.62, 1.1], [0.47, 0.6, 1.18]],
+            m: [[0.4, 0.62, 1.02], [0.42, 0.62, 1.1]],
+            cut: 0.2,
+          },
+        ],
+      } as Scene,
     },
     {
       id: "send-off",
@@ -245,7 +448,10 @@ export const site = {
       rail: "Sparklers",
       place: "The front walk",
       line: `Two lines down the front walk, the doors lit behind you. Music ends at ${clock(hours.musicEnds)}; the lane is lit to the road.`,
-      focus: { d: [1195, 1350, 1.55] as Focus, m: [1200, 1330, 1.5] as Focus },
+      // back on the barn: the camera pulls up and back from the lit glass to the walk
+      // (phones: the lit gable sits just below the clock, the sparklers between it and the caption)
+      focus: { d: [1292, 1220, 1.45] as Focus, m: [1296, 860, 1.25] as Focus },
+      back: "pull" as Back,
     },
   ],
 
@@ -304,7 +510,7 @@ export const site = {
       note: "Any weekend, November through March.",
     },
   ],
-  /** "Walk the grounds": the five spaces, in the order the day uses them. */
+  /** "Walk the grounds": the five spaces, in the order the day uses them (`photos.aerial` sits by the site plan). */
   spaces: [
     {
       id: "loft",
@@ -331,6 +537,8 @@ export const site = {
       name: "The orchard",
       when: "First look & cocktail hour",
       photo: "orchard" as const,
+      /** Shown large, with the close-up as an inset. */
+      wide: "orchardWide" as const,
       capacity: `${pricing.maxGuests} standing, 60 at the long table`,
       size: "40 apple and pear trees, strung with bulbs",
       rain: "The covered porch: 120 standing, heaters on.",
@@ -341,6 +549,7 @@ export const site = {
       name: "The hall",
       when: "Dinner beneath the beams",
       photo: "hall" as const,
+      wide: "hallWide" as const,
       capacity: `${pricing.maxGuests} seated, rounds or long tables`,
       size: "Timber posts and trusses, a gallery above",
       rain: "This is the rain plan.",

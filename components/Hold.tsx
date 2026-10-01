@@ -18,8 +18,8 @@ import { FEATURED } from "@/lib/day";
 import { site, type Focus } from "@/lib/site";
 import { clockLabel } from "@/lib/sun";
 
-/** Framing for the lit barn above the form: the whole front, cupola to lawn. */
-const HOLD_FOCUS = { d: [1200, 1000, 1] as Focus, m: [1196, 1060, 1.12] as Focus };
+/** Framing for the lit barn above the form: the whole front, the peak to the lawn. */
+const HOLD_FOCUS = { d: [1290, 810, 1] as Focus, m: [1290, 900, 1.12] as Focus };
 
 const TOUR_AT = (() => {
   const [h, m] = site.tour.at.split(":").map(Number);

@@ -102,7 +102,7 @@ function paneGlow(g, x, y, w, h) {
   return small;
 }
 self.onmessage = async (e) => {
-  const { src, bitmap, W0, H0, skyline, hasSky, windows } = e.data;
+  const { src, bitmap, W0, H0, skyline, hasSky, clouds, windows } = e.data;
   try {
     // The page hands over the photo it already decoded; fetch it only as a fallback.
     const bmp = bitmap || (await createImageBitmap(await (await fetch(src, { mode: "cors" })).blob()));
@@ -127,16 +127,17 @@ self.onmessage = async (e) => {
       // half-sky, half-roof pixels would otherwise show un-graded, as a pale outline.
       erode(alpha, W0, top, 2);
       for (let k = 0; k < alpha.length; k++) { sd[k * 4] = sd[k * 4 + 1] = sd[k * 4 + 2] = 255; sd[k * 4 + 3] = alpha[k]; }
-      // clouds, at half resolution and softened (they're all interior)
+      // clouds, at half resolution and softened (they're all interior). In an overcast sky
+      // the clouds are its brighter streaks, between the two calibrated luminances.
       const w = W0 / 2, h = Math.ceil(top / 2), cloudImg = new ImageData(w, h), cd = cloudImg.data;
       for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
         const i = (2 * y * W0 + 2 * x) * 4, r = px[i], g = px[i + 1], b = px[i + 2];
         const L = 0.2126 * r + 0.7152 * g + 0.0722 * b, mx = Math.max(r, g, b), mn = Math.min(r, g, b), sat = mx ? (mx - mn) / mx : 0;
         const o = (y * w + x) * 4;
         cd[o] = cd[o + 1] = cd[o + 2] = 255;
-        cd[o + 3] = Math.round(ss(0.2, 0.04, sat) * ss(150, 215, L) * 255);
+        cd[o + 3] = Math.round((clouds ? ss(clouds[0], clouds[1], L) : ss(0.2, 0.04, sat) * ss(150, 215, L)) * 255);
       }
-      blurAlpha(cd, w, h, 2);
+      blurAlpha(cd, w, h, clouds ? 4 : 2);
       for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
         const o = (y * w + x) * 4;
         cd[o + 3] = Math.round((cd[o + 3] * alpha[Math.min(top - 1, 2 * y) * W0 + 2 * x]) / 255);
@@ -228,6 +229,7 @@ function compute(): Promise<Masks> {
         H0: H.size.h,
         skyline: H.skyline,
         hasSky: H.hasSky,
+        clouds: "overcast" in H ? H.overcast.clouds : null,
         windows: H.windows.map((w) => ({ id: w.id, panes: w.panes })),
       };
       worker.postMessage(msg, bitmap ? [bitmap] : []);

@@ -44,6 +44,22 @@ function maskStyle(url: string | null | undefined): React.CSSProperties {
   };
 }
 
+/** The sky between the clouds (the sky mask, less the cloud mask). */
+function clearSkyStyle(sky: string, cloud: string | null): React.CSSProperties {
+  if (!cloud) return maskStyle(sky);
+  const m = `url("${sky}"), url("${cloud}")`;
+  return {
+    maskImage: m,
+    WebkitMaskImage: m,
+    maskSize: "100% 100%",
+    WebkitMaskSize: "100% 100%",
+    maskRepeat: "no-repeat",
+    WebkitMaskRepeat: "no-repeat",
+    maskComposite: "subtract",
+    WebkitMaskComposite: "source-out",
+  };
+}
+
 /** Everything but the sky: the building, the trees and the lawn. */
 function groundMaskStyle(url: string | null | undefined): React.CSSProperties {
   if (!url) return {};
@@ -92,6 +108,7 @@ export const Stage = memo(function Stage({ light, masks, eager = false }: { ligh
         loading={eager ? "eager" : "lazy"}
         decoding="async"
         draggable={false}
+        style={"grade" in H ? { filter: H.grade } : undefined}
         className="absolute inset-0 h-full w-full select-none"
       />
       {GRADES.map((g) => (
@@ -144,6 +161,13 @@ export const Stage = memo(function Stage({ light, masks, eager = false }: { ligh
 
       {sky && (
         <>
+          {/* an overcast photo: blue between its clouds, deeper overhead (it clears in: the
+              layer blends, its paint fades in on first showing) */}
+          {"overcast" in H ? (
+            <motion.div style={{ opacity: light.skyClear, mixBlendMode: "multiply", ...clearSkyStyle(sky, cloud) }} className={layer}>
+              <div className="sky-in absolute inset-0 bg-[linear-gradient(180deg,#6f97d8_0%,#87aae2_22%,#a9c3ec_46%,#cddcf3_68%,#e9eff8_86%)]" />
+            </motion.div>
+          ) : null}
           <motion.div style={{ opacity: light.skyMorning, mixBlendMode: "multiply", background: "linear-gradient(180deg,#e4ebf6 0%,#f2f0ea 48%,#fde6c6 76%)", ...maskStyle(sky) }} className={layer} />
           {/* afternoon: the blue deepens overhead */}
           <motion.div style={{ opacity: light.skyDay, mixBlendMode: "multiply", background: "linear-gradient(180deg,#a9bfe9 0%,#c4d3f0 30%,#e6ecf7 58%,#ffffff 82%)", ...maskStyle(sky) }} className={layer} />
@@ -389,7 +413,7 @@ function Weather({ light }: { light: LightMV }) {
   );
 }
 
-// The sun right behind the cupola catches its top edge: a thin warm line along the skyline,
+// The sun right behind the peak catches the roof's edge: a thin warm line along the skyline,
 // only within a short reach of the sun, never a glow around the whole building.
 const RIM_PTS = H.skyline.map(([x, y]) => `${x},${Math.round((y + 2) * 100) / 100}`).join(" ");
 function RimLight({ on }: { on: MotionValue<number> }) {

@@ -11,7 +11,7 @@ export const BULB_COUNT = 11;
 export const LIGHT_KEYS = [
   "golden", "backlit", "dusk", "blue", "winter", "morning", "cool", "skyPlate", "night", "ground",
   "facadeWarm", "facadeCool",
-  "skyDay", "skyPeach", "skyRose", "skyGlow", "skyBlue", "skyDeep", "skyMorning", "skyWinter",
+  "skyClear", "skyDay", "skyPeach", "skyRose", "skyGlow", "skyBlue", "skyDeep", "skyMorning", "skyWinter",
   "cloudPeach", "cloudRose", "cloudLit", "cloudNight",
   "sun", "sunT", "sunBloom", "rim", "rimLight", "morningSun",
   "windows", "sconces", "bulbs", "spill", "sparklers", "dew", "mist", "frost", "grain",
@@ -69,6 +69,9 @@ export function lightAt(dt: number): Light {
     // lavender once the sun is down behind the ridge.
     facadeWarm: curve([[-95, 0], [-60, 0.3], [-28, 0.32], [-6, 0]], dt),
     facadeCool: curve([[-34, 0], [-8, 0.34], [10, 0.34], [26, 0]], dt),
+    // An overcast photo's sky, painted clear between its clouds: all afternoon, until the
+    // golden-hour sky takes over.
+    skyClear: curve([[-200, 1], [-110, 0.8], [-60, 0.35], [-20, 0]], dt),
     // Afternoon: the blue deepens overhead as the sun drops.
     skyDay: curve([[-340, 0], [-280, 0.25], [-160, 0.55], [-100, 0.6], [-60, 0.3], [-30, 0]], dt),
     // Golden hour: clear blue overhead, gold on the horizon ...
@@ -92,7 +95,7 @@ export function lightAt(dt: number): Light {
     // The glare around a low sun, which spills over the ridge instead of stopping at it.
     sunBloom: curve([[-150, 0], [-90, 0.55], [-40, 0.85], [0, 1], [10, 0.5], [18, 0]], dt),
     rim: curve([[-26, 0], [0, 1], [12, 0.6], [28, 0]], dt),
-    // A thin line of sun catching the top of the cupola while the sun sits right behind it.
+    // A thin line of sun catching the roof's edge while the sun sits right behind the peak.
     rimLight: curve([[-40, 0], [-12, 0.35], [-2, 0.35], [8, 0]], dt),
     morningSun: 0,
     skyWinter: 0,
@@ -120,7 +123,7 @@ export function preset(name: Preset): Light {
       // 10:30 am: low, warm light from behind the camera's left, dew on the lawn, a pale
       // warm horizon. Softer and warmer than the midday photo.
       const zero = Object.fromEntries(LIGHT_KEYS.map((k) => [k, 0])) as Light;
-      return { ...zero, morning: 1, skyMorning: 1, morningSun: 1, dew: 1 };
+      return { ...zero, morning: 1, skyMorning: 1, skyClear: 0.6, morningSun: 1, dew: 1 };
     }
     case "winter": {
       // 22 minutes after a December sunset is civil twilight: a colder, brighter sky than a

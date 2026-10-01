@@ -115,6 +115,16 @@ body {
 }
 
 /* sparklers: streaks fizz out from the core and die; the halo flickers */
+/* an overcast hero photo's painted sky clears in once its mask is computed, never pops */
+@keyframes sky-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.sky-in { animation: sky-in 1.4s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .sky-in { animation: none; }
+}
+
 @keyframes fizz {
   0% { transform: translateY(18%) scaleY(0.25); opacity: 0; }
   18% { opacity: 1; }
